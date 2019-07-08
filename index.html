@@ -48,11 +48,17 @@
   const MONACHAT_HOSTNAME = 'monachat.dyndns.org';
   const CHIBICHAT_HOSTNAME = 'chat.moja.jp';
   const THE_COOL_MUSEUM_HOSTNAME = 'cool.moja.jp';
+  const KANPU_MASATSU_URL = `${THE_COOL_MUSEUM_HOSTNAME}/kanpu.html`;
 
   const CHIBICHAT_WIDTH = 720;
   const CHIBICHAT_BGCOLOR = '#ece4d7';
 
   const THE_COOL_MUSEUM_CLIENT = 'mojachat5h.swf';
+  const THE_COOL_MUSEUM_WIDTH = 728;
+  const THE_COOL_MUSEUM_HEIGHT = 360;
+
+  const KANPU_MASATSU_WIDTH = 780;
+  const KANPU_MASATSU_HEIGHT = 420;
 
   const $select = document.querySelector('select');
   const $div = document.querySelector('div');
@@ -76,6 +82,7 @@
         const isMonachat = hostname === MONACHAT_HOSTNAME;
         const isChibichat = hostname === CHIBICHAT_HOSTNAME;
         const isTheCoolMuseum = hostname === THE_COOL_MUSEUM_HOSTNAME;
+        const isKanpuMasatsu = url === KANPU_MASATSU_URL;
 
         const flashvars = deparam(flashvarsTable[url]);
 
@@ -116,6 +123,8 @@
           1000 - flashvars.stages.split(',').length,
         );
 
+        delete flashvars.stageDisp;
+
         if (new URL($embed.src).hostname !== hostname) {
           $embed.src = `http://${hostname}/${
             isTheCoolMuseum ? THE_COOL_MUSEUM_CLIENT : DEFAULT_CLIENT
@@ -123,10 +132,17 @@
         }
 
         $embed.width = document.body.style.width =
-          flashvars.swidth || (isChibichat && CHIBICHAT_WIDTH) || DEFAULT_WIDTH;
+          flashvars.swidth ||
+          (isChibichat && CHIBICHAT_WIDTH) ||
+          (isKanpuMasatsu && KANPU_MASATSU_WIDTH) ||
+          (isTheCoolMuseum && THE_COOL_MUSEUM_WIDTH) ||
+          DEFAULT_WIDTH;
 
         $embed.height = document.body.style.height =
-          flashvars.sheight || DEFAULT_HEIGHT;
+          flashvars.sheight ||
+          (isKanpuMasatsu && KANPU_MASATSU_HEIGHT) ||
+          (isTheCoolMuseum && THE_COOL_MUSEUM_HEIGHT) ||
+          DEFAULT_HEIGHT;
 
         const bgcolor = isChibichat ? CHIBICHAT_BGCOLOR : DEFAULT_BGCOLOR;
 
