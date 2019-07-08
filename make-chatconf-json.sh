@@ -1,0 +1,2 @@
+#!/bin/bash
+perl -MJSON -MURI -MLWP::Simple -MHTML::Entities -E 'say encode_json { map { $_ => do { $u = URI->new("http://" . (/\./ ? $_ : "monachat.dyndns.org/monachat_$_.html")); join "&", grep length, decode_entities(get($u) =~ /flashvars="(.*?)"/) =~ s/conffile=(.*?)(?:&|$)//r, get(URI->new_abs($1, $u)) } } @ARGV }' entrance main area theme crisscross wide large pulloff1 pulloff2 lab monachat.dyndns.org/monachatfb.html chat.moja.jp/animal.html cool.moja.jp cool.moja.jp/kanpu.html > chatconf.json
