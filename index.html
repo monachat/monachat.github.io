@@ -33,123 +33,130 @@
   />
 </div>
 <script>
-  if (!Object.fromEntries) {
-    Object.fromEntries = (iterable) =>
-      [...iterable].reduce(
-        (object, { 0: key, 1: value }) => ({ ...object, ...{ [key]: value } }),
-        {},
-      );
+  try {
+    if (!Object.fromEntries) {
+      Object.fromEntries = (iterable) =>
+        [...iterable].reduce(
+          (object, { 0: key, 1: value }) => ({
+            ...object,
+            ...{ [key]: value },
+          }),
+          {},
+        );
+    }
+
+    const param = (object) =>
+      Object.entries(object)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('&');
+
+    const deparam = (string) =>
+      Object.fromEntries(string.split('&').map((pair) => pair.split('=')));
+
+    const MONACHAT_HOSTNAME = 'monachat.dyndns.org';
+    const CHIBICHAT_HOSTNAME = 'chat.moja.jp';
+    const THE_COOL_MUSEUM_HOSTNAME = 'cool.moja.jp';
+
+    const CHIBICHAT_BGCOLOR = '#ece4d7';
+
+    const THE_COOL_MUSEUM_CLIENT = 'mojachat5h.swf';
+
+    const $select = document.querySelector('select');
+    const $div = document.querySelector('div');
+    const $embed = document.querySelector('embed');
+
+    const DEFAULT_CLIENT = new URL($embed.src).pathname.replace(/^\//, '');
+    const DEFAULT_BGCOLOR = $embed.getAttribute('bgcolor');
+
+    // perl -MJSON -MURI -MLWP::Simple -MHTML::Entities -E 'say encode_json { map { $_ => do { $u = URI->new("http://" . (/\./ ? $_ : "monachat.dyndns.org/monachat_$_.html")); join "&", grep length, decode_entities(get($u) =~ /flashvars="(.*?)"/) =~ s/conffile=(.*?)(?:&|$)//r, get(URI->new_abs($1, $u)) } } @ARGV }' entrance main area theme crisscross wide large pulloff1 pulloff2 lab monachat.dyndns.org/monachatfb.html chat.moja.jp/animal.html cool.moja.jp cool.moja.jp/kanpu.html > chatconf.json
+
+    fetch('chatconf.json')
+      .then((response) => response.json())
+      .then((flashvarsTable) => {
+        $select.addEventListener('change', () => {
+          const url = $select.value;
+
+          const hostname = url.includes('.')
+            ? new URL('http://' + url).hostname
+            : MONACHAT_HOSTNAME;
+
+          const isMonachat = hostname === MONACHAT_HOSTNAME;
+          const isChibichat = hostname === CHIBICHAT_HOSTNAME;
+          const isTheCoolMuseum = hostname === THE_COOL_MUSEUM_HOSTNAME;
+
+          const flashvars = deparam(flashvarsTable[url]);
+
+          Object.assign(flashvars, {
+            maxuser: 0,
+            playTimeout: 0,
+            stageTimeout: 0,
+            autotrip: 'on',
+            regularStatOnly: 'OFF',
+            ...(flashvars.vmove !== 'ON'
+              ? {
+                  vmove: 'ON',
+                  view: '3D',
+                  ...(!flashvars.app ? { app: 'MONA' } : {}),
+                }
+              : {}),
+          });
+
+          ['title', 'charPath', 'stagePath'].forEach((key) => {
+            if (!flashvars[key]) return;
+
+            flashvars[key] = `http://${hostname}/${flashvars[key]}`;
+          });
+
+          if (isMonachat) {
+            flashvars.characters += `,裏キャラ:${[
+              'boljoa2',
+              'joruju',
+              'joruju2',
+              'nazoko',
+              'nin',
+              'tibifusa2',
+              'unknown',
+            ].join(',')}`;
+          }
+
+          if (new URL($embed.src).hostname !== hostname) {
+            $embed.src = `http://${hostname}/${
+              isTheCoolMuseum ? THE_COOL_MUSEUM_CLIENT : DEFAULT_CLIENT
+            }`;
+          }
+
+          const bgcolor = isChibichat ? CHIBICHAT_BGCOLOR : DEFAULT_BGCOLOR;
+
+          if ($embed.getAttribute('bgcolor') !== bgcolor) {
+            $embed.setAttribute('bgcolor', bgcolor);
+            document.body.style.backgroundColor = bgcolor;
+          }
+
+          $embed.setAttribute('flashvars', param(flashvars));
+
+          $div.innerHTML = $embed.outerHTML;
+
+          history.replaceState(null, null, `#${encodeURIComponent(url)}`);
+        });
+
+        window.addEventListener('hashchange', () => {
+          let url = location.hash.replace(/^#/, '');
+
+          if (!url) return;
+
+          url = decodeURIComponent(url);
+
+          if ($select.value === url) return;
+
+          $select.value = url;
+          $select.dispatchEvent(new Event('change'));
+        });
+
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+      });
+  } catch (error) {
+    alert(error);
   }
-
-  const param = (object) =>
-    Object.entries(object)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('&');
-
-  const deparam = (string) =>
-    Object.fromEntries(string.split('&').map((pair) => pair.split('=')));
-
-  const MONACHAT_HOSTNAME = 'monachat.dyndns.org';
-  const CHIBICHAT_HOSTNAME = 'chat.moja.jp';
-  const THE_COOL_MUSEUM_HOSTNAME = 'cool.moja.jp';
-
-  const CHIBICHAT_BGCOLOR = '#ece4d7';
-
-  const THE_COOL_MUSEUM_CLIENT = 'mojachat5h.swf';
-
-  const $select = document.querySelector('select');
-  const $div = document.querySelector('div');
-  const $embed = document.querySelector('embed');
-
-  const DEFAULT_CLIENT = new URL($embed.src).pathname.replace(/^\//, '');
-  const DEFAULT_BGCOLOR = $embed.getAttribute('bgcolor');
-
-  // perl -MJSON -MURI -MLWP::Simple -MHTML::Entities -E 'say encode_json { map { $_ => do { $u = URI->new("http://" . (/\./ ? $_ : "monachat.dyndns.org/monachat_$_.html")); join "&", grep length, decode_entities(get($u) =~ /flashvars="(.*?)"/) =~ s/conffile=(.*?)(?:&|$)//r, get(URI->new_abs($1, $u)) } } @ARGV }' entrance main area theme crisscross wide large pulloff1 pulloff2 lab monachat.dyndns.org/monachatfb.html chat.moja.jp/animal.html cool.moja.jp cool.moja.jp/kanpu.html > chatconf.json
-
-  fetch('chatconf.json')
-    .then((response) => response.json())
-    .then((flashvarsTable) => {
-      $select.addEventListener('change', () => {
-        const url = $select.value;
-
-        const hostname = url.includes('.')
-          ? new URL('http://' + url).hostname
-          : MONACHAT_HOSTNAME;
-
-        const isMonachat = hostname === MONACHAT_HOSTNAME;
-        const isChibichat = hostname === CHIBICHAT_HOSTNAME;
-        const isTheCoolMuseum = hostname === THE_COOL_MUSEUM_HOSTNAME;
-
-        const flashvars = deparam(flashvarsTable[url]);
-
-        Object.assign(flashvars, {
-          maxuser: 0,
-          playTimeout: 0,
-          stageTimeout: 0,
-          autotrip: 'on',
-          regularStatOnly: 'OFF',
-          ...(flashvars.vmove !== 'ON'
-            ? {
-                vmove: 'ON',
-                view: '3D',
-                ...(!('app' in flashvars) ? { app: 'MONA' } : {}),
-              }
-            : {}),
-        });
-
-        ['title', 'charPath', 'stagePath'].forEach((key) => {
-          if (!(key in flashvars)) return;
-
-          flashvars[key] = `http://${hostname}/${flashvars[key]}`;
-        });
-
-        if (isMonachat) {
-          flashvars.characters += `,裏キャラ:${[
-            'boljoa2',
-            'joruju',
-            'joruju2',
-            'nazoko',
-            'nin',
-            'tibifusa2',
-            'unknown',
-          ].join(',')}`;
-        }
-
-        if (new URL($embed.src).hostname !== hostname) {
-          $embed.src = `http://${hostname}/${
-            isTheCoolMuseum ? THE_COOL_MUSEUM_CLIENT : DEFAULT_CLIENT
-          }`;
-        }
-
-        const bgcolor = isChibichat ? CHIBICHAT_BGCOLOR : DEFAULT_BGCOLOR;
-
-        if ($embed.getAttribute('bgcolor') !== bgcolor) {
-          $embed.setAttribute('bgcolor', bgcolor);
-          document.body.style.backgroundColor = bgcolor;
-        }
-
-        $embed.setAttribute('flashvars', param(flashvars));
-
-        $div.innerHTML = $embed.outerHTML;
-
-        history.replaceState(null, null, `#${encodeURIComponent(url)}`);
-      });
-
-      window.addEventListener('hashchange', () => {
-        let url = location.hash.replace(/^#/, '');
-
-        if (!url) return;
-
-        url = decodeURIComponent(url);
-
-        if ($select.value === url) return;
-
-        $select.value = url;
-        $select.dispatchEvent(new Event('change'));
-      });
-
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    });
 </script>
 <style>
   body {
