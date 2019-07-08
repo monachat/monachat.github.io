@@ -27,6 +27,14 @@
   />
 </div>
 <script>
+  if (!Object.fromEntries) {
+    Object.fromEntries = (iterable) =>
+      [...iterable].reduce(
+        (object, [key, value]) => ({ ...object, ...{ [key]: value } }),
+        {},
+      );
+  }
+
   const param = (object) =>
     Object.entries(object)
       .map(([key, value]) => `${key}=${value}`)
