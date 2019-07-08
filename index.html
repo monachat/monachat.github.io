@@ -113,6 +113,10 @@
           ].join(',')}`;
         }
 
+        flashvars.stages += `,${isMonachat ? 'st1room' : ''}`.repeat(
+          1000 - flashvars.stages.split(',').length,
+        );
+
         if (new URL($embed.src).hostname !== hostname) {
           $embed.src = `http://${hostname}/${
             isTheCoolMuseum ? THE_COOL_MUSEUM_CLIENT : DEFAULT_CLIENT
